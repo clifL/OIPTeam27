@@ -9,7 +9,9 @@ def get_readings():
         humidity, temperature = Adafruit_DHT.read_retry(11, 4)
         if humidity is not None and temperature is not None:
             temperature = '%.2f'%(temperature)
+            temperature = float(temperature)
             humidity = '%.2f'%(humidity)
+            humidity = float(humidity)
             temp_humidity.humidity.append(humidity)
             temp_humidity.temp.append(temperature)
             count = count + 1
