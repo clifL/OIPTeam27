@@ -26,3 +26,8 @@ def get_mean_with_iqr(data):
 def get_median(data):
     import statistics
     return float(statistics.median(data))
+
+
+def get_working_directory():
+    from pathlib import Path
+    return Path.cwd() 

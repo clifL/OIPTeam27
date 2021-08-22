@@ -1,6 +1,6 @@
 from numpy import true_divide
 from DHT11 import *
-from DataHelper import *
+from Helper import *
 from SMS import *
 from Telegram import *
 
@@ -18,15 +18,14 @@ def logging():
         now = datetime.now()
         # dd/mm/YY H:M:S
         dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-        print("date and time =", dt_string)
-
         # open the file in the write mode
-        with open('log.csv', 'w', encoding='UTF8', newline='') as f:
+        with open('log.csv', 'a+', encoding='UTF8', newline='') as f:
             # create the csv writer
             writer = csv.writer(f)
             # write a row to the csv file
             data = [str(temp), str(humidity), dt_string]
             writer.writerow(data)
+        print("Logged: " + str(temp) + "," + str(humidity) + "," + dt_string)
     
 
 def is_dry():
