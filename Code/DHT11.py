@@ -5,7 +5,7 @@ def get_readings():
     temp_humidity.humidity = []
     temp_humidity.temp = []
     count = 0
-    while count <= 20:
+    while count <= 15:
         humidity, temperature = Adafruit_DHT.read_retry(11, 4)
         if humidity is not None and temperature is not None:
             temperature = '%.2f'%(temperature)
