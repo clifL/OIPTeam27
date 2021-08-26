@@ -10,8 +10,7 @@ from sklearn import metrics
 # Used to save and load the model
 import pickle
 
-
-def generate_save_model():
+def generate_save_is_dry_model():
     scikit_ver = sklearn.__version__
     print(scikit_ver)
     #Load dataset
@@ -62,8 +61,7 @@ def prediction(data):
 
     return y_pred
 
-
-# generate_save_model()
+# generate_save_is_dry_model()
 data = {'temp': [30], 'humidity': [70], 'fan_speed':[0], 'elapsed_time':1500}
 data_two = {'temp': [64], 'humidity': [3], 'fan_speed':[1], 'elapsed_time':200}
 print((prediction(data))[0])

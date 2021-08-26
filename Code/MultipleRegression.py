@@ -1,15 +1,15 @@
 import pandas
 from sklearn import linear_model
 
-df = pandas.read_csv("Filtered.csv")
+def get_drying_time():
+    df = pandas.read_csv("Filtered.csv")
 
-X = df[['temp', 'humidity', 'fan_speed', 'elapsed_time']]
-y = df['is_dry']
+    X = df[['is_dry']]
+    y = df['elapsed_time']
 
-regr = linear_model.LinearRegression()
-regr.fit(X, y)
+    regr = linear_model.LinearRegression()
+    regr.fit(X, y)
 
-#predict the CO2 emission of a car where the weight is 2300kg, and the volume is 1300cm3:
-predictedCO2 = regr.predict([[68, 0, 1, 649.9999998]])
+    elapsed_time = regr.predict([[1]])
 
-print(predictedCO2)
+    return elapsed_time
