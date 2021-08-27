@@ -10,8 +10,10 @@ def turn_motor(signal):
 		pwm.start(7) # start PWM by rotating to 90 degrees
 	else:
 		pwm.start(12.0)
-	time.sleep(0.5)
+	time.sleep(2)
 	pwm.ChangeDutyCycle(0) # this prevents jitter
 	pwm.stop() # stops the pwm on 13
 	GPIO.cleanup()
+
+turn_motor(True)
 
