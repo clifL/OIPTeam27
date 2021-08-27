@@ -91,6 +91,7 @@ def controller():
     if stop_status == True:
         stateLbl.configure(text="Idle")
         stop_status = False
+        pause_status = False
         return
     
     if pause_status != True:
@@ -198,12 +199,14 @@ def stop_operation():
     global leftover_dry_duration
     global leftover_wash_duration
     global stop_status
+    global pause_status
     stateLbl.configure(text="Idle")
     status = 0
     # turn_off_water_pump()
     # turn_off_heated_fan()
     # turn_motor(False)
     stop_status = True
+    pause_status = True
     leftover_wash_duration = 0
     leftover_dry_duration = 0
 
@@ -240,10 +243,13 @@ def pause_operation():
 def extra_wash_operation():
     global status
     global washing_duration
+    global pause_status
     global leftover_wash_duration
+    global wash_end_time
     if status == 0 and pause_status == False:
         status = 1
         leftover_wash_duration = washing_duration
+        wash_end_time = datetime.datetime.now() + datetime.timedelta(seconds=leftover_wash_duration)
         controller()
     status = 0
     
@@ -251,12 +257,15 @@ def extra_wash_operation():
 def extra_dry_operation():
     global status
     global drying_duration
+    global pause_status
     global leftover_dry_duration
+    global dry_end_time
     status = 2
     controller()
     if status == 0 and pause_status == False:
         status = 2
         leftover_dry_duration = drying_duration
+        dry_end_time = datetime.datetime.now() + datetime.timedelta(seconds=leftover_dry_duration) + datetime.timedelta(seconds=leftover_wash_duration)
         controller()
     status = 0
 
