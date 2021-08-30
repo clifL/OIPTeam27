@@ -1,9 +1,13 @@
+from Relay import turn_off_water_pump, turn_on_water_pump
 from tkinter import *
 from tkinter.ttk import Progressbar
 import tkinter.font as tkFont
 import time
 from Helper import *
 import datetime
+from ReedSwitch import *
+from SVM import *
+from Motor import *
 
 
 # 0 - Idle, 1 - Wash, 2 - Dry, 3 - Pause, 4 - Extra Washing, 5 - Extra Drying
@@ -14,13 +18,16 @@ status = 0
 previous_status = 0
 leftover_wash_duration = 0
 leftover_dry_duration = 0
-washing_duration = 5
+washing_duration = 180
 drying_elapsed = 0
-drying_duration = 5
+drying_duration = get_drying_time()
 # drying_duration = get_drying_time()
 time_now = datetime.datetime.now()
 wash_end_time = time_now
 dry_end_time = time_now
+early_completion = False
+early_predict_status = False
+addition_dry_time = False
 
 
 window = Tk()
@@ -84,9 +91,13 @@ def controller():
     global leftover_wash_duration
     global leftover_dry_duration
     global drying_elapsed
+    global early_completion
+    global drying_duration
+    global early_predict_status
+    global addition_dry_time
+    global init_water_pump_off
 
-    washing_duration = leftover_wash_duration
-    drying_duration = leftover_dry_duration
+
     # Check if magnetic reed switch returns true
     if stop_status == True:
         stateLbl.configure(text="Idle")
@@ -95,80 +106,95 @@ def controller():
         return
     
     if pause_status != True:
-        if washing_duration > 0:
-            status = 1
-            # turn_motor(False)
-            stateLbl.configure(text="Washing in progress")
-            # turn_on_water_pump()
-            if init_status == False:
-                init_status == True
-                # wash_end_time = datetime.datetime.now() + datetime.timedelta(seconds=washing_duration)
-                # dry_end_time = datetime.datetime.now() + datetime.timedelta(seconds=drying_duration) + datetime.timedelta(seconds=washing_duration) 
+        if magnetic_status():
+            if leftover_wash_duration > 0:
+                status = 1
+                # turn_motor(False)
+                stateLbl.configure(text="Washing in progress")
+                # turn_on_water_pump()
+                if init_status == False:
+                    turn_on_water_pump()
+                    init_status == True
+                    # wash_end_time = datetime.datetime.now() + datetime.timedelta(seconds=washing_duration)
+                    # dry_end_time = datetime.datetime.now() + datetime.timedelta(seconds=drying_duration) + datetime.timedelta(seconds=washing_duration) 
 
-            # Initially is while
-            if (status == 1) and (datetime.datetime.now() < wash_end_time):
-                leftover_wash_duration = (wash_end_time-datetime.datetime.now()).total_seconds()
-                stateLbl.configure(text="Washing in progress... Left: " + str(int(leftover_wash_duration)) + " seconds")
-                # if magnetic_status() == False:
-                #     previous_status = status
-                #     status = 3
+                # Initially is while
+                if (status == 1) and (datetime.datetime.now() < wash_end_time):
+                    leftover_wash_duration = (wash_end_time-datetime.datetime.now()).total_seconds()
+                    stateLbl.configure(text="Washing in progress... Left: " + str(int(leftover_wash_duration)) + " seconds")
+                    # if magnetic_status() == False:
+                    #     previous_status = status
+                    #     status = 3
+                    #     # turn_off_water_pump()
+                    #     leftover_wash_duration = (wash_end_time-datetime.datetime.now()).total_seconds()
+                    #     leftover_dry_duration = drying_duration
+                    #     stateLbl.configure(text="Washing paused. Please close the door and press 'Continue' button.")
+                # if status == 1:
                 #     # turn_off_water_pump()
-                #     leftover_wash_duration = (wash_end_time-datetime.datetime.now()).total_seconds()
-                #     leftover_dry_duration = drying_duration
-                #     stateLbl.configure(text="Washing paused. Please close the door and press 'Continue' button.")
-            # if status == 1:
-            #     # turn_off_water_pump()
-            #     status = 2
-            #     stateLbl.configure(text="Drying in progress")
-            #     # turn_motor(True)
-            #     # turn_on_heated_fan()
-        elif drying_duration > 0:
-            status = 2
-            # current_time = datetime.datetime.now()
-            # Initially is while
-            if (status == 2) and (datetime.datetime.now() < dry_end_time):    
+                #     status = 2
+                #     stateLbl.configure(text="Drying in progress")
+                #     # turn_motor(True)
+                #     # turn_on_heated_fan()
+            elif leftover_dry_duration > 0:
+                turn_off_water_pump()
+                status = 2
+                # current_time = datetime.datetime.now()
+                # Initially is while
+                if (status == 2) and (datetime.datetime.now() < dry_end_time):    
+                    leftover_dry_duration = (dry_end_time-datetime.datetime.now()).total_seconds()
+                    if addition_dry_time:
+                        stateLbl.configure(text="Additional drying in progress...  Left: " + str(int(leftover_dry_duration)) + " seconds")
+                    else:
+                        stateLbl.configure(text="Drying in progress...  Left: " + str(int(leftover_dry_duration)) + " seconds")
+                # # Do ML here to check if is really dry
+                drying_elapsed = drying_duration - leftover_dry_duration
+                if ((leftover_dry_duration < 79) and (early_predict_status == False)):
+                    early_predict_status = True
+                    data = {'temp': [70], 'humidity': [0], 'fan_speed':[1], 'elapsed_time':[1100]}
+                    if prediction(data) == 1:
+                        print("The syringes is predicted to be dry.")
+                        early_completion = True
+                    else:
+                        print("The syringes is predicted to be wet.")
+
+            if status == 3:
+                leftover_wash_duration = (wash_end_time-datetime.datetime.now()).total_seconds()
+                if leftover_wash_duration < 0:
+                    leftover_wash_duration = 0
                 leftover_dry_duration = (dry_end_time-datetime.datetime.now()).total_seconds()
-                stateLbl.configure(text="Drying in progress...  Left: " + str(int(leftover_dry_duration)) + " seconds")
-                # if magnetic_status() == False:
-                #     leftover_dry_duration = (dry_end_time-datetime.datetime.now()).total_seconds()
-                #     previous_status = status
-                #     status = 3
-                #     # turn_off_heated_fan()
-                #     stateLbl.configure(text="Drying paused. Please close the door and press 'Continue' button.")
-                # drying_elapsed = (datetime.datetime.now() - current_time).total_seconds() 
-            # if status == 2:
-            #     # turn_off_heated_fan()
-            #     status = 0
-            #     stateLbl.configure(text="Drying completed")
-        if status == 3:
-            leftover_wash_duration = (wash_end_time-datetime.datetime.now()).total_seconds()
-            if leftover_wash_duration < 0:
-                leftover_wash_duration = 0
-            leftover_dry_duration = (dry_end_time-datetime.datetime.now()).total_seconds()
-            if leftover_dry_duration < 0:
-                leftover_dry_duration = 0
-            # # Do ML here to check if is really dry
-            # data = {'temp': [30], 'humidity': [70], 'fan_speed':[0], 'elapsed_time':drying_elapsed}
-            # if prediction(data) == 1:
-            #     print("The syringes is dry.")
-            # else:
-            #     print("The syringes is wet.")
-        else:
-            leftover_wash_duration = (wash_end_time-datetime.datetime.now()).total_seconds()
-            leftover_dry_duration = (dry_end_time-datetime.datetime.now()).total_seconds()
-            if leftover_wash_duration < 1:
-                leftover_wash_duration = 0
-            if leftover_dry_duration < 1:
-                leftover_dry_duration = 0
-            print("wash: " + str(leftover_wash_duration))
-            print("dry: " + str(leftover_dry_duration))
-            if leftover_dry_duration <= 0 and leftover_wash_duration <= 0:
-                stateLbl.configure(text="Process completed")
-                status = 0
-                leftover_wash_duration = 0
-                leftover_dry_duration = 0
+                if leftover_dry_duration < 0:
+                    leftover_dry_duration = 0
             else:
-                window.after(200, controller)
+                leftover_wash_duration = (wash_end_time-datetime.datetime.now()).total_seconds()
+                leftover_dry_duration = (dry_end_time-datetime.datetime.now()).total_seconds()
+                if leftover_wash_duration < 1:
+                    leftover_wash_duration = 0
+                if leftover_dry_duration < 1:
+                    leftover_dry_duration = 0
+                if leftover_dry_duration <= 0 and leftover_wash_duration <= 0:
+                    drying_elapsed = drying_duration
+                    data = {'temp': [30], 'humidity': [70], 'fan_speed':[0], 'elapsed_time':drying_elapsed}
+                    if ((prediction(data) == 0) and (addition_dry_time == False)):
+                        stateLbl.configure(text="The syringes are still wet, adding additional 2 min to drying")
+                        addition_dry_time = True
+                        dry_end_time = datetime.datetime.now() + datetime.timedelta(seconds=120)
+                        leftover_dry_duration = 120
+                        window.after(200, controller)
+                    stateLbl.configure(text="Process completed")
+                    status = 0
+                    leftover_wash_duration = 0
+                    leftover_dry_duration = 0
+                else:
+                    if early_completion:
+                        saved_time = drying_duration - drying_elapsed
+                        stateLbl.configure(text="The syringes are predicted to be dry via SVM model. Early Termination, saved " + str(saved_time) + " seconds.")
+                        write_drying_time(int(saved_time))
+                    else:
+                        window.after(200, controller)
+        else:
+            stateLbl.configure(text="Please close the door.")
+            previous_status = status
+            status = 3
     else:
         stateLbl.configure(text="Paused")
 
@@ -182,6 +208,11 @@ def start_operation():
     global pause_status
     global wash_end_time
     global dry_end_time
+    global early_completion
+    global early_predict_status
+    global drying_duration
+    global addition_dry_time
+    
 
     if status != 0:
         return
@@ -189,7 +220,12 @@ def start_operation():
         # Do ML here to get washing and drying duration
         leftover_dry_duration = drying_duration
         leftover_wash_duration = washing_duration
+        early_completion = False
+        early_predict_status = False
+        drying_duration = get_drying_time()
+        addition_dry_time = False
         wash_end_time = datetime.datetime.now() + datetime.timedelta(seconds=washing_duration)
+        leftover_wash_duration = (wash_end_time-datetime.datetime.now()).total_seconds()
         dry_end_time = datetime.datetime.now() + datetime.timedelta(seconds=drying_duration) + datetime.timedelta(seconds=washing_duration) 
         controller()
         
@@ -200,15 +236,21 @@ def stop_operation():
     global leftover_wash_duration
     global stop_status
     global pause_status
+    global early_completion
+    global early_predict_status
+    global addition_dry_time
     stateLbl.configure(text="Idle")
     status = 0
     # turn_off_water_pump()
     # turn_off_heated_fan()
     # turn_motor(False)
+    early_completion = False
     stop_status = True
-    pause_status = True
+    pause_status = False
+    early_predict_status = False
     leftover_wash_duration = 0
     leftover_dry_duration = 0
+    addition_dry_time = False
 
 
 def continue_operation():
@@ -246,8 +288,10 @@ def extra_wash_operation():
     global pause_status
     global leftover_wash_duration
     global wash_end_time
+    global early_completion
     if status == 0 and pause_status == False:
         status = 1
+        early_completion = False
         leftover_wash_duration = washing_duration
         wash_end_time = datetime.datetime.now() + datetime.timedelta(seconds=leftover_wash_duration)
         controller()
@@ -257,15 +301,25 @@ def extra_wash_operation():
 def extra_dry_operation():
     global status
     global drying_duration
+    global addition_dry_time
+    global leftover_wash_duration
     global pause_status
     global leftover_dry_duration
     global dry_end_time
+    global early_completion
+    global early_predict_status
+    global wash_end_time
     status = 2
     controller()
     if status == 0 and pause_status == False:
         status = 2
+        early_completion = False
+        early_predict_status = False
         leftover_dry_duration = drying_duration
+        leftover_wash_duration = 0
+        wash_end_time = datetime.datetime.now()
         dry_end_time = datetime.datetime.now() + datetime.timedelta(seconds=leftover_dry_duration) + datetime.timedelta(seconds=leftover_wash_duration)
+        addition_dry_time = True
         controller()
     status = 0
 
@@ -319,13 +373,13 @@ btnDry = Button(window, text="EXTRA DRYING", bg="orange", fg="white", width=200,
 
 btnDry.place(x=120, y=650)
 
-statusLbl = Label(window, text="Status: ", fg="red", font=("Arial Bold", 15))
+statusLbl = Label(window, text="Status: ", fg="red", font=("Arial Bold", 14))
 
-statusLbl.place(x=120, y=60)
+statusLbl.place(x=10, y=60)
 
-stateLbl = Label(window, text="Idle", fg="red", font=("Arial Bold", 15))
+stateLbl = Label(window, text="Idle", fg="red", font=("Arial Bold", 14))
 
-stateLbl.place(x=200, y=60)
+stateLbl.place(x=85, y=60)
 
 # timeLbl = Label(window, text="00:00", font=("Arial Bold", 15))
 

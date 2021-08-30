@@ -15,5 +15,3 @@ def turn_motor(signal):
 	pwm.stop() # stops the pwm on 13
 	GPIO.cleanup()
 
-turn_motor(True)
-

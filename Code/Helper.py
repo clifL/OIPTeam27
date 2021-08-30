@@ -1,3 +1,5 @@
+from pathlib import Path
+
 def get_median_from_mean_iqr(data):
     return get_median(get_mean_with_iqr(data))
 
@@ -29,5 +31,19 @@ def get_median(data):
 
 
 def get_working_directory():
-    from pathlib import Path
     return Path.cwd() 
+
+
+def get_drying_time():
+	path = str(get_working_directory()) + "/drying_time.txt"
+	fileInstance = open(path, "r")
+	textStream = fileInstance.read()
+	textStream = textStream.rstrip()
+	fileInstance.close()
+	return int(textStream)
+
+
+def write_drying_time(drying_time):
+	path = str(get_working_directory()) + "/drying_time.txt"
+	with open(path, "w") as f:
+            f.write(str(drying_time))

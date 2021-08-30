@@ -16,4 +16,4 @@ def send_telegram_message(msg):
         return False
 
 
-#send_telegram_message("Drying process done. Syringes are ready to collect.")
+# send_telegram_message("Drying process done. Syringes are ready to collect.")

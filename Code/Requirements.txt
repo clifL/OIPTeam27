@@ -3,3 +3,4 @@ Adafruit_DHT
 tk
 pathlib
 scikit-learn
+pandas
