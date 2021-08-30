@@ -16,7 +16,7 @@ status = 0
 previous_status = 0
 leftover_wash_duration = 0
 leftover_dry_duration = 0
-washing_duration = 5
+washing_duration = 180
 drying_elapsed = 0
 drying_duration = get_drying_time()
 # drying_duration = get_drying_time()
@@ -145,7 +145,7 @@ def controller():
                 drying_elapsed = drying_duration - leftover_dry_duration
                 if ((leftover_dry_duration < 79) and (early_predict_status == False)):
                     early_predict_status = True
-                    data = {'temp': [70], 'humidity': [0], 'fan_speed':[1], 'elapsed_time':[1070]}
+                    data = {'temp': [70], 'humidity': [0], 'fan_speed':[1], 'elapsed_time':[drying_elapsed]}
                     if prediction(data) == 1:
                         print("The syringes is predicted to be dry.")
                         early_completion = True
@@ -182,7 +182,7 @@ def controller():
                 else:
                     if early_completion:
                         saved_time = drying_duration - drying_elapsed
-                        stateLbl.configure(text="The syringes are predicted to be dry via SVM model." + '\n' + "Early Termination, saved " + str(saved_time) + " seconds.")
+                        stateLbl.configure(text="The syringes are predicted to be dry via Machine Learning (SVM)." + '\n' + "Early Termination, saved " + str(saved_time) + " seconds.")
                         write_drying_time(int(saved_time))            
                     else:
                         window.after(200, controller)

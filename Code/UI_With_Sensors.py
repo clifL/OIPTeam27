@@ -150,7 +150,7 @@ def controller():
                 drying_elapsed = drying_duration - leftover_dry_duration
                 if ((leftover_dry_duration < 79) and (early_predict_status == False)):
                     early_predict_status = True
-                    data = {'temp': [70], 'humidity': [0], 'fan_speed':[1], 'elapsed_time':[1100]}
+                    data = {'temp': [70], 'humidity': [0], 'fan_speed':[1], 'elapsed_time':[drying_elapsed]}
                     if prediction(data) == 1:
                         print("The syringes is predicted to be dry.")
                         early_completion = True
@@ -173,7 +173,7 @@ def controller():
                     leftover_dry_duration = 0
                 if leftover_dry_duration <= 0 and leftover_wash_duration <= 0:
                     drying_elapsed = drying_duration
-                    data = {'temp': [30], 'humidity': [70], 'fan_speed':[0], 'elapsed_time':drying_elapsed}
+                    data = {'temp': [30], 'humidity': [70], 'fan_speed':[0], 'elapsed_time':[drying_elapsed]}
                     if ((prediction(data) == 0) and (addition_dry_time == False)):
                         stateLbl.configure(text="The syringes are still wet, adding additional 2 min to drying")
                         addition_dry_time = True
