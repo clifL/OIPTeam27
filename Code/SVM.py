@@ -8,13 +8,14 @@ from sklearn import svm
 from sklearn import metrics
 import matplotlib.pyplot as plt
 from matplotlib.pyplot import figure
+import datetime
 
 # Used to save and load the model
 import pickle
 
 def generate_save_is_dry_model():
     scikit_ver = sklearn.__version__
-    print(scikit_ver)
+    # print(scikit_ver)
     #Load dataset
     dryness = pd.read_csv('Filtered.csv', delimiter=',')
     x = dryness[['temp', 'humidity', 'fan_speed','elapsed_time']]
@@ -108,7 +109,11 @@ def plot_graph_fan_speed_elapsed_time():
 # generate_save_is_dry_model()
 # data = {'temp': [70], 'humidity': [2], 'fan_speed':[1], 'elapsed_time':1050}
 # data_two = {'temp': [64], 'humidity': [3], 'fan_speed':[1], 'elapsed_time':200}
-# print(prediction(data))
+# prior = datetime.datetime.now()
+# status = prediction(data)
+# after = datetime.datetime.now()
+# elapsed = (after - prior).total_seconds()
+# print("Time taken for machine learning prediction: " + str(elapsed) + " seconds")
 # print((prediction(data_two))[0])
 # plot_graph_temp_humidity()
 # plot_graph_temp_elapsed_time()
